@@ -1,5 +1,4 @@
 from telethon import TelegramClient, events
-from telethon.tl.types import Message
 from texts import Messages
 from database import Database
 import logging
@@ -47,3 +46,24 @@ async def register_history_handler(client: TelegramClient, db: Database):
         )
         
         logger.info(f"User {user.id} viewed history. Total spent: ${total_spent}")
+    
+    @client.on(events.CallbackQuery(data=b"back"))
+    async def back_handler(event):
+        """Handle Back button click"""
+        user = await event.get_sender()
+        mention = f"[{user.first_name}](tg://user?id={user.id})"
+        
+        # Recreate main menu
+        buttons = [
+            [
+                event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now"),
+                event.client.build_inline_keyboard_button(Messages.BTN_DEMO, b"demo"),
+                event.client.build_inline_keyboard_button(Messages.BTN_HISTORY, b"history")
+            ]
+        ]
+        
+        await event.edit(
+            Messages.START.format(mention=mention),
+            buttons=buttons,
+            parse_mode='markdown'
+        )
