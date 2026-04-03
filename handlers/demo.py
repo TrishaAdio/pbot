@@ -1,5 +1,5 @@
 from telethon import TelegramClient, events
-from telethon.tl.types import InlineKeyboardButton
+from telethon.tl.custom import Button
 from texts import Messages
 from database import Database
 import logging
@@ -14,16 +14,14 @@ async def register_demo_handler(client: TelegramClient, db: Database):
         """Handle Demo button click"""
         user = await event.get_sender()
         
+        # Create just one back button
         buttons = [
-            [
-                InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now"),
-                InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"back")
-            ]
+            [Button.inline(Messages.BTN_BACK, b"back")]
         ]
         
         await event.answer("Showing demo...")
         await event.edit(
-            Messages.DEMO_TEXT.format(video_count="5,000+"),
+            Messages.DEMO_TEXT,
             buttons=buttons,
             parse_mode='html'
         )
