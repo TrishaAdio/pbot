@@ -148,3 +148,21 @@ Here's a preview of what you'll get:
 💾 Save this message for future reference!</blockquote>
 
 <i>Thank you for your purchase! ❤️</i>"""
+
+# In texts.py, add this if not already there
+DEMO_TEXT = """<b>🎮 DEMO VERSION</b>
+
+<blockquote>Check out sample content quality!</blockquote>
+
+<b>📹 Sample Video:</b>
+Here's a preview of what you'll get:
+
+[Sample video link or preview]
+
+<blockquote>💎 <b>Full version includes:</b>
+✓ 5000+ videos
+✓ HD/4K quality
+✓ Private access
+✓ Lifetime validity</blockquote>
+
+👇 <b>Buy full version for complete access</b> 👇"""
