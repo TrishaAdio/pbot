@@ -50,14 +50,14 @@ async def register_history_handler(client: TelegramClient, db: Database):
     
     @client.on(events.CallbackQuery(data=b"back"))
     async def back_handler(event):
-        """Handle Back button click"""
+        """Handle Back button click - Show same layout as /start"""
         user = await event.get_sender()
-        mention = f"[{user.first_name}](tg://user?id={user.id})"
+        mention = user.first_name
         
-        # Recreate main menu
+        # Same button layout as start message
         buttons = [
+            [Button.inline(Messages.BTN_BUY_NOW, b"buy_now")],
             [
-                Button.inline(Messages.BTN_BUY_NOW, b"buy_now"),
                 Button.inline(Messages.BTN_DEMO, b"demo"),
                 Button.inline(Messages.BTN_HISTORY, b"history")
             ]
@@ -66,5 +66,5 @@ async def register_history_handler(client: TelegramClient, db: Database):
         await event.edit(
             Messages.START.format(mention=mention),
             buttons=buttons,
-            parse_mode='markdown'
+            parse_mode='html'
         )
