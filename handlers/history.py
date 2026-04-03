@@ -1,4 +1,5 @@
 from telethon import TelegramClient, events
+from telethon.types import InlineKeyboardButton
 from texts import Messages
 from database import Database
 import logging
@@ -20,8 +21,8 @@ async def register_history_handler(client: TelegramClient, db: Database):
         if not purchases:
             history_text = Messages.NO_HISTORY
             buttons = [
-                [event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now")],
-                [event.client.build_inline_keyboard_button(Messages.BTN_BACK, b"back")]
+                [InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now")],
+                [InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"back")]
             ]
         else:
             history_list = ""
@@ -34,8 +35,8 @@ async def register_history_handler(client: TelegramClient, db: Database):
             )
             
             buttons = [
-                [event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now")],
-                [event.client.build_inline_keyboard_button(Messages.BTN_BACK, b"back")]
+                [InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now")],
+                [InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"back")]
             ]
         
         await event.answer("Loading history...")
@@ -56,9 +57,9 @@ async def register_history_handler(client: TelegramClient, db: Database):
         # Recreate main menu
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now"),
-                event.client.build_inline_keyboard_button(Messages.BTN_DEMO, b"demo"),
-                event.client.build_inline_keyboard_button(Messages.BTN_HISTORY, b"history")
+                InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now"),
+                InlineKeyboardButton(text=Messages.BTN_DEMO, callback_data=b"demo"),
+                InlineKeyboardButton(text=Messages.BTN_HISTORY, callback_data=b"history")
             ]
         ]
         
