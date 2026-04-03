@@ -1,5 +1,5 @@
 from telethon import TelegramClient, events
-from telethon.types import InlineKeyboardButton
+from telethon.tl.types import InlineKeyboardButton
 from texts import Messages
 from database import Database
 import logging
