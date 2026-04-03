@@ -1,5 +1,5 @@
 from telethon import TelegramClient, events
-from telethon.tl.types import InlineKeyboardButton
+from telethon.tl.custom import Button
 from texts import Messages
 from database import Database
 import logging
@@ -15,12 +15,12 @@ async def register_start_handler(client: TelegramClient, db: Database):
         user = await event.get_sender()
         mention = f"[{user.first_name}](tg://user?id={user.id})"
         
-        # Create buttons using Telethon syntax
+        # Create buttons using Button.inline
         buttons = [
             [
-                InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now"),
-                InlineKeyboardButton(text=Messages.BTN_DEMO, callback_data=b"demo"),
-                InlineKeyboardButton(text=Messages.BTN_HISTORY, callback_data=b"history")
+                Button.inline(Messages.BTN_BUY_NOW, b"buy_now"),
+                Button.inline(Messages.BTN_DEMO, b"demo"),
+                Button.inline(Messages.BTN_HISTORY, b"history")
             ]
         ]
         
