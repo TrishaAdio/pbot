@@ -1,4 +1,5 @@
 from telethon import TelegramClient, events
+from telethon.types import InlineKeyboardButton
 from texts import Messages
 from database import Database
 import logging
@@ -15,8 +16,8 @@ async def register_demo_handler(client: TelegramClient, db: Database):
         
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now"),
-                event.client.build_inline_keyboard_button(Messages.BTN_BACK, b"back")
+                InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now"),
+                InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"back")
             ]
         ]
         
