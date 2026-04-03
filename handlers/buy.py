@@ -1,4 +1,5 @@
 from telethon import TelegramClient, events
+from telethon.types import InlineKeyboardButton
 from texts import Messages
 from database import Database
 import logging
@@ -20,14 +21,14 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         """Handle Buy Now button click - Show plan selection"""
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_PLAN1, b"plan1"),
-                event.client.build_inline_keyboard_button(Messages.BTN_PLAN2, b"plan2")
+                InlineKeyboardButton(text=Messages.BTN_PLAN1, callback_data=b"plan1"),
+                InlineKeyboardButton(text=Messages.BTN_PLAN2, callback_data=b"plan2")
             ],
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_PLAN3, b"plan3")
+                InlineKeyboardButton(text=Messages.BTN_PLAN3, callback_data=b"plan3")
             ],
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BACK, b"back")
+                InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"back")
             ]
         ]
         
@@ -58,11 +59,11 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_ULTRA, f"ultra_{plan_key}".encode()),
-                event.client.build_inline_keyboard_button(Messages.BTN_LITE, f"lite_{plan_key}".encode())
+                InlineKeyboardButton(text=Messages.BTN_ULTRA, callback_data=f"ultra_{plan_key}".encode()),
+                InlineKeyboardButton(text=Messages.BTN_LITE, callback_data=f"lite_{plan_key}".encode())
             ],
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BACK, b"buy_now")
+                InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=b"buy_now")
             ]
         ]
         
@@ -122,10 +123,10 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_CONFIRM, f"confirm_{plan_key}_{package_type}_{price}".encode())
+                InlineKeyboardButton(text=Messages.BTN_CONFIRM, callback_data=f"confirm_{plan_key}_{package_type}_{price}".encode())
             ],
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BACK, f"{plan_key}".encode())
+                InlineKeyboardButton(text=Messages.BTN_BACK, callback_data=f"{plan_key}".encode())
             ]
         ]
         
@@ -176,8 +177,8 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         # Show success message
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_HISTORY, b"history"),
-                event.client.build_inline_keyboard_button("🏠 MAIN MENU", b"back")
+                InlineKeyboardButton(text=Messages.BTN_HISTORY, callback_data=b"history"),
+                InlineKeyboardButton(text="🏠 MAIN MENU", callback_data=b"back")
             ]
         ]
         
