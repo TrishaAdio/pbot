@@ -1,6 +1,4 @@
 from telethon import TelegramClient, events
-from telethon.tl.types import Message
-from telethon.utils import get_input_location
 from texts import Messages
 from database import Database
 import logging
@@ -37,7 +35,7 @@ async def register_start_handler(client: TelegramClient, db: Database):
         await event.respond(
             Messages.START.format(mention=mention),
             buttons=buttons,
-            parse_mode='html'
+            parse_mode='markdown'
         )
         
         logger.info(f"User {user.id} started the bot")
