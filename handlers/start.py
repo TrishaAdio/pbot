@@ -1,4 +1,5 @@
 from telethon import TelegramClient, events
+from telethon.types import InlineKeyboardButton
 from texts import Messages
 from database import Database
 import logging
@@ -14,12 +15,12 @@ async def register_start_handler(client: TelegramClient, db: Database):
         user = await event.get_sender()
         mention = f"[{user.first_name}](tg://user?id={user.id})"
         
-        # Create buttons
+        # Create buttons using Telethon syntax
         buttons = [
             [
-                event.client.build_inline_keyboard_button(Messages.BTN_BUY_NOW, b"buy_now"),
-                event.client.build_inline_keyboard_button(Messages.BTN_DEMO, b"demo"),
-                event.client.build_inline_keyboard_button(Messages.BTN_HISTORY, b"history")
+                InlineKeyboardButton(text=Messages.BTN_BUY_NOW, callback_data=b"buy_now"),
+                InlineKeyboardButton(text=Messages.BTN_DEMO, callback_data=b"demo"),
+                InlineKeyboardButton(text=Messages.BTN_HISTORY, callback_data=b"history")
             ]
         ]
         
@@ -35,7 +36,8 @@ async def register_start_handler(client: TelegramClient, db: Database):
         await event.respond(
             Messages.START.format(mention=mention),
             buttons=buttons,
-            parse_mode='markdown'
+            parse_mode='markdown',
+            link_preview=False
         )
         
         logger.info(f"User {user.id} started the bot")
