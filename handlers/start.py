@@ -13,12 +13,12 @@ async def register_start_handler(client: TelegramClient, db: Database):
     async def start_handler(event):
         """Handle /start command"""
         user = await event.get_sender()
-        mention = f"[{user.first_name}](tg://user?id={user.id})"
+        mention = user.first_name
         
-        # Create buttons using Button.inline
+        # Create buttons layout: Buy Now on top row alone, Demo and History on second row
         buttons = [
+            [Button.inline(Messages.BTN_BUY_NOW, b"buy_now")],  # Full width button
             [
-                Button.inline(Messages.BTN_BUY_NOW, b"buy_now"),
                 Button.inline(Messages.BTN_DEMO, b"demo"),
                 Button.inline(Messages.BTN_HISTORY, b"history")
             ]
@@ -32,12 +32,11 @@ async def register_start_handler(client: TelegramClient, db: Database):
             last_name=user.last_name
         )
         
-        # Send message with buttons
+        # Send message with buttons - using HTML parse mode
         await event.respond(
             Messages.START.format(mention=mention),
             buttons=buttons,
-            parse_mode='markdown',
-            link_preview=False
+            parse_mode='html'
         )
         
         logger.info(f"User {user.id} started the bot")
