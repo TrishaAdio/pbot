@@ -5,15 +5,17 @@ from database import Database
 from utils import log_user_action, payment_api
 import logging
 import asyncio
+import base64
+from io import BytesIO
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Plan details with correct prices
 PLANS = {
-    "plan1": {"name": "PLAN 1", "videos": "5,000", "lite_price": 50, "ultra_price": 85},
-    "plan2": {"name": "PLAN 2", "videos": "10,000", "lite_price": 89, "ultra_price": 119},
-    "plan3": {"name": "PLAN 3", "videos": "25,000", "lite_price": 150, "ultra_price": 250}
+    "plan1": {"name": "PLAN 1 (Kids CP)", "videos": "5,000", "lite_price": 50, "ultra_price": 85},
+    "plan2": {"name": "PLAN 2 (Desi Bhabhi)", "videos": "10,000", "lite_price": 89, "ultra_price": 119},
+    "plan3": {"name": "PLAN 3 (All Videos)", "videos": "25,000", "lite_price": 150, "ultra_price": 250}
 }
 
 # Store active payment sessions
@@ -89,117 +91,140 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         await initiate_payment(event, "plan3", "LITE", PLANS["plan3"]["lite_price"])
     
     async def initiate_payment(event, plan_key, package_type, amount):
-    plan = PLANS[plan_key]
-    user = event.sender
-    
-    # Create invoice via API
-    merchant_name = f"{plan['name']} {package_type}"
-    merchant_desc = f"{plan['videos']} videos - {package_type} package"
-    
-    # Show loading message
-    await event.edit("⏳ Creating payment invoice... Please wait.", parse_mode='html')
-    
-    invoice = await payment_api.create_invoice(amount, merchant_name, merchant_desc)
-    
-    if not invoice['success']:
-        await event.edit(f"❌ Payment service error: {invoice.get('error', 'Unknown error')}\n\nPlease try again later.", parse_mode='html')
-        return
-    
-    unique_amount = invoice['unique_amount']
-    qr_base64 = invoice.get('full_response', {}).get('qr_base64', '')
-    upi_link = invoice.get('full_response', {}).get('upi_link', '')
-    
-    # Store payment session
-    session_id = f"{user.id}_{plan_key}_{package_type}_{unique_amount}"
-    active_payments[session_id] = {
-        'user_id': user.id,
-        'plan_key': plan_key,
-        'package_type': package_type,
-        'amount': amount,
-        'unique_amount': unique_amount,
-        'status': 'pending',
-        'chat_id': event.chat_id,
-        'message_id': event.message_id
-    }
-    
-    # Send QR code as photo
-    import base64
-    from io import BytesIO
-    
-    if qr_base64:
-        # Decode base64 to image
-        qr_image_data = base64.b64decode(qr_base64)
-        qr_file = BytesIO(qr_image_data)
-        qr_file.name = "qr_code.png"
+        plan = PLANS[plan_key]
+        user = event.sender
         
-        # Send QR code as photo
-        await event.client.send_file(
-            event.chat_id,
-            qr_file,
-            caption=Messages.PAYMENT_QR.format(
-                plan_name=plan['name'],
-                package_type=package_type,
-                amount=unique_amount,
-                qr_code=""
-            ),
-            parse_mode='html'
-        )
+        # Create invoice via API
+        merchant_name = f"{plan['name']} {package_type}"
+        merchant_desc = f"{plan['videos']} videos - {package_type} package"
         
-        # Edit the original message with buttons
+        # Show loading message
+        loading_msg = await event.edit("⏳ Creating payment invoice... Please wait.", parse_mode='html')
+        
+        invoice = await payment_api.create_invoice(amount, merchant_name, merchant_desc)
+        
+        if not invoice['success']:
+            await event.edit(f"❌ Payment service error: {invoice.get('error', 'Unknown error')}\n\nPlease try again later.", parse_mode='html')
+            return
+        
+        unique_amount = invoice['unique_amount']
+        qr_base64 = invoice.get('full_response', {}).get('qr_base64', '')
+        upi_link = invoice.get('full_response', {}).get('upi_link', '')
+        
+        # Store payment session
+        session_id = f"{user.id}_{plan_key}_{package_type}_{unique_amount}"
+        active_payments[session_id] = {
+            'user_id': user.id,
+            'plan_key': plan_key,
+            'package_type': package_type,
+            'amount': amount,
+            'unique_amount': unique_amount,
+            'status': 'pending',
+            'chat_id': event.chat_id,
+            'message_id': event.message_id,
+            'merchant_name': merchant_name
+        }
+        
+        # Delete loading message
+        await loading_msg.delete()
+        
+        # Prepare payment message text
+        payment_text = f"""<b>💳 PAYMENT REQUIRED</b>
+
+<b>📁 Plan:</b> {plan['name']}
+<b>📦 Package:</b> {package_type}
+<b>💰 Amount to Pay:</b> ₹{unique_amount}
+
+<blockquote>Scan the QR code below to complete payment:</blockquote>
+
+<blockquote>⏰ Payment will expire in 10 minutes</blockquote>
+
+👇 <b>After payment, click CHECK STATUS</b> 👇"""
+        
         buttons = [
             [Button.inline(Messages.BTN_CHECK_STATUS, f"check_{session_id}".encode())],
             [Button.inline(Messages.BTN_CANCEL_PAYMENT, b"buy_now")]
         ]
         
-        await event.delete()  # Delete the loading message
-        await event.client.send_message(
-            event.chat_id,
-            Messages.PAYMENT_QR.format(
-                plan_name=plan['name'],
-                package_type=package_type,
-                amount=unique_amount,
-                qr_code=""
-            ),
-            buttons=buttons,
-            parse_mode='html'
-        )
-    else:
-        # Fallback to text QR if no image
-        qr_text = f"""
+        # Send QR code as photo if available
+        if qr_base64:
+            try:
+                # Decode base64 to image
+                qr_image_data = base64.b64decode(qr_base64)
+                qr_file = BytesIO(qr_image_data)
+                qr_file.name = "qr_code.png"
+                
+                # Send QR code as photo with caption
+                await event.client.send_file(
+                    event.chat_id,
+                    qr_file,
+                    caption=payment_text,
+                    buttons=buttons,
+                    parse_mode='html'
+                )
+                await event.delete()
+            except Exception as e:
+                logger.error(f"Error sending QR image: {e}")
+                # Fallback to text QR
+                qr_text = f"""
 ┌─────────────────────────────┐
 │                             │
 │   📱 SCAN TO PAY ₹{unique_amount}   │
 │                             │
-│   UPI Link: {upi_link}      │
+│   UPI ID: isrohit@fam       │
+│   Amount: ₹{unique_amount}  │
 │                             │
 └─────────────────────────────┘
 
 💳 **UPI Link:** `{upi_link}`
+
+*Click the link or scan QR to pay*
 """
-        buttons = [
-            [Button.inline(Messages.BTN_CHECK_STATUS, f"check_{session_id}".encode())],
-            [Button.inline(Messages.BTN_CANCEL_PAYMENT, b"buy_now")]
-        ]
+                await event.edit(
+                    Messages.PAYMENT_QR.format(
+                        plan_name=plan['name'],
+                        package_type=package_type,
+                        amount=unique_amount,
+                        qr_code=qr_text
+                    ),
+                    buttons=buttons,
+                    parse_mode='html'
+                )
+        else:
+            # Fallback to text QR
+            qr_text = f"""
+┌─────────────────────────────┐
+│                             │
+│   📱 SCAN TO PAY ₹{unique_amount}   │
+│                             │
+│   UPI ID: isrohit@fam       │
+│   Amount: ₹{unique_amount}  │
+│                             │
+└─────────────────────────────┘
+
+💳 **UPI Link:** `{upi_link}`
+
+*Click the link or scan QR to pay*
+"""
+            await event.edit(
+                Messages.PAYMENT_QR.format(
+                    plan_name=plan['name'],
+                    package_type=package_type,
+                    amount=unique_amount,
+                    qr_code=qr_text
+                ),
+                buttons=buttons,
+                parse_mode='html'
+            )
         
-        await event.edit(
-            Messages.PAYMENT_QR.format(
-                plan_name=plan['name'],
-                package_type=package_type,
-                amount=unique_amount,
-                qr_code=qr_text
-            ),
-            buttons=buttons,
-            parse_mode='html'
-        )
-    
-    log_user_action(user.id, user.username, user.first_name, "Initiating payment", f"{plan['name']} {package_type} - ₹{amount}")
-    
-    # Auto-check payment in background
-    asyncio.create_task(check_payment_loop(event.client, event.chat_id, session_id, unique_amount))
+        log_user_action(user.id, user.username, user.first_name, "Initiating payment", f"{plan['name']} {package_type} - ₹{amount}")
+        
+        # Auto-check payment in background
+        asyncio.create_task(check_payment_loop(event.client, event.chat_id, session_id, unique_amount))
     
     async def check_payment_loop(client, chat_id, session_id, amount, timeout=600):
         """Check payment status every 5 seconds for 10 minutes"""
-        for _ in range(timeout // 5):
+        for i in range(timeout // 5):
             await asyncio.sleep(5)
             
             if session_id not in active_payments:
@@ -208,17 +233,21 @@ async def register_buy_handler(client: TelegramClient, db: Database):
             if active_payments[session_id]['status'] == 'completed':
                 return
             
-            result = await payment_api.check_payment(amount)
-            
-            if result.get('paid'):
-                active_payments[session_id]['status'] = 'completed'
-                await complete_purchase(client, chat_id, session_id)
-                return
+            # Check every 30 seconds instead of every 5 to avoid spam
+            if i % 6 == 0 or i == 0:
+                result = await payment_api.check_payment(amount)
+                
+                if result.get('paid'):
+                    active_payments[session_id]['status'] = 'completed'
+                    await complete_purchase(client, chat_id, session_id)
+                    return
         
         # Timeout
         if session_id in active_payments and active_payments[session_id]['status'] == 'pending':
             active_payments[session_id]['status'] = 'timeout'
             await client.send_message(chat_id, Messages.PAYMENT_TIMEOUT, parse_mode='html')
+            # Clean up
+            del active_payments[session_id]
     
     async def complete_purchase(client, chat_id, session_id):
         """Complete the purchase after successful payment"""
@@ -237,23 +266,54 @@ async def register_buy_handler(client: TelegramClient, db: Database):
             package_type=session['package_type']
         )
         
+        # Get user info for logging
+        user = await client.get_entity(user_id)
+        
         buttons = [
             [Button.inline(Messages.BTN_HISTORY, b"history"), Button.inline("🏠 MAIN MENU", b"back")]
         ]
         
+        success_text = f"""<b>✅ PAYMENT SUCCESSFUL!</b>
+
+<blockquote>🎉 Your payment of ₹{session['amount']} has been received!</blockquote>
+
+<b>📁 Plan:</b> {plan['name']}
+<b>📦 Package:</b> {session['package_type']}
+<b>💰 Amount Paid:</b> ₹{session['amount']}
+
+<blockquote>📥 <b>Access Your Content:</b>
+Contact @support to get your access link</blockquote>
+
+<i>Thank you for your purchase! ❤️</i>"""
+        
         await client.send_message(
             chat_id,
-            Messages.PAYMENT_SUCCESS.format(
-                amount=session['amount'],
-                plan_name=plan['name'],
-                package_type=session['package_type'],
-                access_link="https://t.me/your_channel/start"
-            ),
+            success_text,
             buttons=buttons,
             parse_mode='html'
         )
         
-        log_user_action(user_id, None, f"User {user_id}", "Payment successful", f"{plan['name']} {session['package_type']} - ₹{session['amount']}")
+        # Send log to log channel
+        try:
+            from config import Config
+            log_msg = f"""
+# 💰 **PURCHASE COMPLETED**
+
+**👤 User:** {user.first_name}
+**🆔 ID:** `{user_id}`
+**🔖 Username:** @{user.username if user.username else 'N/A'}
+
+**📁 Plan:** {plan['name']}
+**📦 Package:** {session['package_type']}
+**💰 Amount:** ₹{session['amount']}
+
+**⏰ Time:** {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+            await client.send_message(Config.LOG_CHANNEL_ID, log_msg, parse_mode='markdown')
+        except Exception as e:
+            logger.error(f"Failed to send log to channel: {e}")
+        
+        log_user_action(user_id, user.username, user.first_name, "Payment successful", f"{plan['name']} {session['package_type']} - ₹{session['amount']}")
         
         # Cleanup
         del active_payments[session_id]
@@ -264,10 +324,13 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         session_id = event.data.decode().split("_")[1]
         
         if session_id not in active_payments:
-            await event.answer("Payment session expired!", alert=True)
+            await event.answer("Payment session expired! Please start a new purchase.", alert=True)
             return
         
         session = active_payments[session_id]
+        
+        await event.answer("Checking payment status...")
+        
         result = await payment_api.check_payment(session['unique_amount'])
         
         if result.get('paid'):
