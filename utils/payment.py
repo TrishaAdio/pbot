@@ -28,11 +28,10 @@ class PaymentAPI:
                     
                     if resp.status == 200:
                         result = await resp.json()
-                        # The API returns unique_amount that user needs to pay
-                        unique_amount = result.get('unique_amount', amount)
+                        # The API returns unique_amount, qr_base64, upi_link
                         return {
                             'success': True,
-                            'unique_amount': unique_amount,
+                            'unique_amount': result.get('unique_amount', amount),
                             'original_amount': amount,
                             'full_response': result
                         }
