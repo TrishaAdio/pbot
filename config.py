@@ -11,3 +11,9 @@ class Config:
     # MongoDB Configuration
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017')
     MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'telethon_bot')
+    
+    # Log Channel
+    LOG_CHANNEL_ID = int(os.getenv('LOG_CHANNEL_ID', '-1001234567890'))  # Your log channel ID
+    
+    # Payment API
+    PAYMENT_API_URL = os.getenv('PAYMENT_API_URL', 'http://localhost:8000')
