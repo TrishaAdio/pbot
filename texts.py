@@ -185,7 +185,7 @@ Here's a preview of what you'll get:
 
 👇 <b>After payment, click CHECK STATUS</b> 👇"""
 
-    # Payment success message
+    # Payment success message 
     PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
 
 <blockquote>🎉 Your payment of ₹{amount} has been received!</blockquote>
