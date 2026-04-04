@@ -6,7 +6,7 @@ class Messages:
 
 <blockquote>ᴠɪᴀ ᴛʜɪs ʙᴏᴛ ʏᴏᴜ ᴄᴀɴ ʙᴜʏ ʜᴅ ᴘʀᴇᴍɪᴜᴍ ᴄᴏɴᴛᴇɴᴛ ᴠɪᴅᴇᴏs ᴀᴛ ᴄʜᴇᴀᴘ ᴘʀɪᴄᴇ!</blockquote>
 
-<b📁 ᴋɪᴅs ( ᴄᴘ )</b> - <i>5,000+ Videos</i>
+<b>📁 ᴋɪᴅs ( ᴄᴘ )</b> - <i>5,000+ Videos</i>
 <b>📁 ᴅᴇsɪ ʙʜᴀʙɪ</b> - <i>𝟷𝟶,𝟶𝟶𝟶 ᴠɪᴅᴇᴏs</i>
 <b>📁 ᴅᴇsɪ + ᴍᴍs + ᴠɪʀᴀʟ ᴀʟʟ ᴠɪᴅᴇᴏs</b> - <i>𝟸𝟻,𝟶𝟶𝟶 ᴠɪᴅᴇᴏs</i>
 
@@ -21,11 +21,11 @@ class Messages:
 Choose the perfect plan for your needs:
 
 <b>📁 ᴋɪᴅs ( ᴄᴘ )</b> - <i>5,000+ Videos</i>
-💰 <b>Price:</b> $XX
+💰 <b>Price:</b> ₹50 - ₹85
 <b>📁 ᴅᴇsɪ ʙʜᴀʙɪ</b> - <i>10,000 Videos</i>
-💰 <b>Price:</b> $XX
+💰 <b>Price:</b> ₹89 - ₹119
 <b>📁 ᴅᴇsɪ + ᴍᴍs + ᴠɪʀᴀʟ ᴀʟʟ ᴠɪᴅᴇᴏs</b> - <i>25,000 Videos</i>
-💰 <b>Price:</b> $XX
+💰 <b>Price:</b> ₹150 - ₹250
 
 <blockquote>💎 All plans include:
 ✓ Instant delivery
@@ -55,7 +55,7 @@ Choose the perfect plan for your needs:
 
 <b>📁 Plan:</b> {plan_name} (ULTRA)
 <b>📊 Videos:</b> {video_count}+ videos
-<b>💰 Price:</b> ${ultra_price}
+<b>💰 Price:</b> ₹{ultra_price}
 
 <blockquote>✨ <b>ULTRA Benefits:</b>
 • Full HD & 4K content
@@ -74,7 +74,7 @@ Choose the perfect plan for your needs:
 
 <b>📁 Plan:</b> {plan_name} (LITE)
 <b>📊 Videos:</b> {video_count}+ videos
-<b>💰 Price:</b> ${lite_price}
+<b>💰 Price:</b> ₹{lite_price}
 
 <blockquote>✨ <b>LITE Benefits:</b>
 • HD quality content
@@ -86,6 +86,7 @@ Choose the perfect plan for your needs:
 
 ✅ <b>Click CONFIRM to complete your purchase</b>"""
 
+    # Button texts
     BTN_BUY_NOW = "💰 BUY NOW"
     BTN_DEMO = "🎮 DEMO"
     BTN_HISTORY = "📜 HISTORY"
@@ -97,60 +98,11 @@ Choose the perfect plan for your needs:
     BTN_CONFIRM = "✅ CONFIRM PURCHASE"
     BTN_BACK = "⬅️ BACK"
     BTN_CANCEL = "❌ CANCEL"
-    BTN_CHECK_STATUS = "✅ CHECK PAYMENT STATUS"  # ← ADD THIS INSIDE CLASS
-    BTN_CANCEL_PAYMENT = "❌ CANCEL"  # ← ADD THIS INSIDE CLASS
+    BTN_CHECK_STATUS = "✅ CHECK PAYMENT STATUS"
+    BTN_CANCEL_PAYMENT = "❌ CANCEL"
 
     # Demo page
     DEMO_TEXT = """<b>🎮 DEMO VERSION</b>
-
-<blockquote>Check out sample content quality!</blockquote>
-
-<b>📹 Sample Video:</b>
-Here's a preview of what you'll get:
-
-[Sample video link or preview]
-
-<blockquote>💎 <b>Full version includes:</b>
-✓ {video_count}+ videos
-✓ HD/4K quality
-✓ Private access
-✓ Lifetime validity</blockquote>
-
-👇 <b>Buy full version for complete access</b> 👇"""
-
-    # History page
-    HISTORY_TEXT = """<b>📜 PURCHASE HISTORY</b>
-
-{history_list}
-
-<blockquote>💎 Total Spent: ${total_spent}</blockquote>
-
-<i>Thank you for being our customer! ❤️</i>"""
-
-    NO_HISTORY = """<b>📜 PURCHASE HISTORY</b>
-
-<blockquote>You haven't made any purchases yet!</blockquote>
-
-👇 <b>Click BUY NOW to get started</b> 👇"""
-
-    # Purchase success message
-    PURCHASE_SUCCESS = """<b>✅ PURCHASE SUCCESSFUL!</b>
-
-<blockquote>🎉 Congratulations! You've successfully purchased:</blockquote>
-
-<b>📁 Plan:</b> {plan_name}
-<b>📦 Package:</b> {package_type}
-<b>💰 Amount Paid:</b> ${price}
-
-<blockquote>📥 <b>Access Your Content:</b>
-[Link to your content will appear here]
-
-💾 Save this message for future reference!</blockquote>
-
-<i>Thank you for your purchase! ❤️</i>"""
-
-# In texts.py, add this if not already there
-DEMO_TEXT = """<b>🎮 DEMO VERSION</b>
 
 <blockquote>Check out sample content quality!</blockquote>
 
@@ -167,9 +119,37 @@ Here's a preview of what you'll get:
 
 👇 <b>Buy full version for complete access</b> 👇"""
 
-# Add these to your Messages class
+    # History page
+    HISTORY_TEXT = """<b>📜 PURCHASE HISTORY</b>
 
-# Payment QR message
+{history_list}
+
+<blockquote>💎 Total Spent: ₹{total_spent}</blockquote>
+
+<i>Thank you for being our customer! ❤️</i>"""
+
+    NO_HISTORY = """<b>📜 PURCHASE HISTORY</b>
+
+<blockquote>You haven't made any purchases yet!</blockquote>
+
+👇 <b>Click BUY NOW to get started</b> 👇"""
+
+    # Purchase success message
+    PURCHASE_SUCCESS = """<b>✅ PURCHASE SUCCESSFUL!</b>
+
+<blockquote>🎉 Congratulations! You've successfully purchased:</blockquote>
+
+<b>📁 Plan:</b> {plan_name}
+<b>📦 Package:</b> {package_type}
+<b>💰 Amount Paid:</b> ₹{price}
+
+<blockquote>📥 <b>Access Your Content:</b>
+[Link to your content will appear here]
+
+💾 Save this message for future reference!</blockquote>
+
+<i>Thank you for your purchase! ❤️</i>"""
+
     # Payment QR message
     PAYMENT_QR = """<b>💳 PAYMENT REQUIRED</b>
 
@@ -185,7 +165,7 @@ Here's a preview of what you'll get:
 
 👇 <b>After payment, click CHECK STATUS</b> 👇"""
 
-    # Payment success message 
+    # Payment success message
     PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
 
 <blockquote>🎉 Your payment of ₹{amount} has been received!</blockquote>
@@ -197,6 +177,18 @@ Here's a preview of what you'll get:
 {access_link}</blockquote>
 
 <i>Thank you for your purchase! ❤️</i>"""
+
+    # Payment failed message
+    PAYMENT_FAILED = """<b>❌ PAYMENT FAILED</b>
+
+<blockquote>Payment of ₹{amount} was not received.</blockquote>
+
+<b>📁 Plan:</b> {plan_name}
+<b>📦 Package:</b> {package_type}
+
+<blockquote>⏰ You can try again by clicking BUY NOW.</blockquote>
+
+<i>Need help? Contact support.</i>"""
 
     # Payment timeout message
     PAYMENT_TIMEOUT = """<b>⏰ PAYMENT TIMEOUT</b>
