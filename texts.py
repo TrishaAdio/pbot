@@ -164,3 +164,58 @@ Here's a preview of what you'll get:
 ✓ Lifetime validity</blockquote>
 
 👇 <b>Buy full version for complete access</b> 👇"""
+
+# Add these to your Messages class
+
+# Payment QR message
+PAYMENT_QR = """<b>💳 PAYMENT REQUIRED</b>
+
+<b>📁 Plan:</b> {plan_name}
+<b>📦 Package:</b> {package_type}
+<b>💰 Amount to Pay:</b> ₹{amount}
+
+<blockquote>Scan the QR code below to complete payment:</blockquote>
+
+{qr_code}
+
+<blockquote>⏰ Payment will expire in 10 minutes</blockquote>
+
+👇 <b>After payment, click CHECK STATUS</b> 👇"""
+
+# Payment success message
+PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
+
+<blockquote>🎉 Your payment of ₹{amount} has been received!</blockquote>
+
+<b>📁 Plan:</b> {plan_name}
+<b>📦 Package:</b> {package_type}
+
+<blockquote>📥 <b>Access Your Content:</b>
+{access_link}</blockquote>
+
+<i>Thank you for your purchase! ❤️</i>"""
+
+# Payment failed message
+PAYMENT_FAILED = """<b>❌ PAYMENT FAILED</b>
+
+<blockquote>Payment of ₹{amount} was not received.</blockquote>
+
+<b>📁 Plan:</b> {plan_name}
+<b>📦 Package:</b> {package_type}
+
+<blockquote>⏰ You can try again by clicking BUY NOW.</blockquote>
+
+<i>Need help? Contact support.</i>"""
+
+# Payment timeout message
+PAYMENT_TIMEOUT = """<b>⏰ PAYMENT TIMEOUT</b>
+
+<blockquote>Payment session expired.</blockquote>
+
+Please start a new purchase by clicking BUY NOW.
+
+<i>Thank you for your interest! ❤️</i>"""
+
+# Button texts - Add these
+BTN_CHECK_STATUS = "✅ CHECK PAYMENT STATUS"
+BTN_CANCEL_PAYMENT = "❌ CANCEL"
