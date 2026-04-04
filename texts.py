@@ -40,7 +40,8 @@ Choose the perfect plan for your needs:
 
 <b>📁 Plan:</b> {plan_name}
 <b>📊 Videos:</b> {video_count}+ videos
-<b>💰 Price:</b> ${price}
+<b>💰 Lite Price:</b> ₹{lite_price}
+<b>💰 Ultra Price:</b> ₹{ultra_price}
 
 <blockquote>🎯 <b>Choose your package type:</b></blockquote>
 
