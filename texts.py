@@ -86,7 +86,6 @@ Choose the perfect plan for your needs:
 
 ✅ <b>Click CONFIRM to complete your purchase</b>"""
 
-    # Button texts
     BTN_BUY_NOW = "💰 BUY NOW"
     BTN_DEMO = "🎮 DEMO"
     BTN_HISTORY = "📜 HISTORY"
@@ -98,6 +97,8 @@ Choose the perfect plan for your needs:
     BTN_CONFIRM = "✅ CONFIRM PURCHASE"
     BTN_BACK = "⬅️ BACK"
     BTN_CANCEL = "❌ CANCEL"
+    BTN_CHECK_STATUS = "✅ CHECK PAYMENT STATUS"  # ← ADD THIS INSIDE CLASS
+    BTN_CANCEL_PAYMENT = "❌ CANCEL"  # ← ADD THIS INSIDE CLASS
 
     # Demo page
     DEMO_TEXT = """<b>🎮 DEMO VERSION</b>
@@ -169,7 +170,8 @@ Here's a preview of what you'll get:
 # Add these to your Messages class
 
 # Payment QR message
-PAYMENT_QR = """<b>💳 PAYMENT REQUIRED</b>
+    # Payment QR message
+    PAYMENT_QR = """<b>💳 PAYMENT REQUIRED</b>
 
 <b>📁 Plan:</b> {plan_name}
 <b>📦 Package:</b> {package_type}
@@ -183,8 +185,8 @@ PAYMENT_QR = """<b>💳 PAYMENT REQUIRED</b>
 
 👇 <b>After payment, click CHECK STATUS</b> 👇"""
 
-# Payment success message
-PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
+    # Payment success message
+    PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
 
 <blockquote>🎉 Your payment of ₹{amount} has been received!</blockquote>
 
@@ -196,27 +198,11 @@ PAYMENT_SUCCESS = """<b>✅ PAYMENT SUCCESSFUL!</b>
 
 <i>Thank you for your purchase! ❤️</i>"""
 
-# Payment failed message
-PAYMENT_FAILED = """<b>❌ PAYMENT FAILED</b>
-
-<blockquote>Payment of ₹{amount} was not received.</blockquote>
-
-<b>📁 Plan:</b> {plan_name}
-<b>📦 Package:</b> {package_type}
-
-<blockquote>⏰ You can try again by clicking BUY NOW.</blockquote>
-
-<i>Need help? Contact support.</i>"""
-
-# Payment timeout message
-PAYMENT_TIMEOUT = """<b>⏰ PAYMENT TIMEOUT</b>
+    # Payment timeout message
+    PAYMENT_TIMEOUT = """<b>⏰ PAYMENT TIMEOUT</b>
 
 <blockquote>Payment session expired.</blockquote>
 
 Please start a new purchase by clicking BUY NOW.
 
 <i>Thank you for your interest! ❤️</i>"""
-
-# Button texts - Add these
-BTN_CHECK_STATUS = "✅ CHECK PAYMENT STATUS"
-BTN_CANCEL_PAYMENT = "❌ CANCEL"
