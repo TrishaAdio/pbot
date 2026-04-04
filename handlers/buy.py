@@ -2,44 +2,36 @@ from telethon import TelegramClient, events
 from telethon.tl.custom import Button
 from texts import Messages
 from database import Database
+from utils import log_user_action, payment_api
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Plan details
+# Plan details with correct prices
 PLANS = {
-    "plan1": {"name": "PLAN 1", "videos": "5,000", "price": 10, "ultra_price": 15, "lite_price": 10},
-    "plan2": {"name": "PLAN 2", "videos": "10,000", "price": 18, "ultra_price": 25, "lite_price": 18},
-    "plan3": {"name": "PLAN 3", "videos": "25,000", "price": 35, "ultra_price": 50, "lite_price": 35}
+    "plan1": {"name": "PLAN 1", "videos": "5,000", "lite_price": 50, "ultra_price": 85},
+    "plan2": {"name": "PLAN 2", "videos": "10,000", "lite_price": 89, "ultra_price": 119},
+    "plan3": {"name": "PLAN 3", "videos": "25,000", "lite_price": 150, "ultra_price": 250}
 }
+
+# Store active payment sessions
+active_payments = {}
 
 async def register_buy_handler(client: TelegramClient, db: Database):
     
     @client.on(events.CallbackQuery(data=b"buy_now"))
     async def buy_now_handler(event):
-        """Handle Buy Now button click - Show plan selection"""
         buttons = [
-            [
-                Button.inline(Messages.BTN_PLAN1, b"plan1"),
-                Button.inline(Messages.BTN_PLAN2, b"plan2")
-            ],
-            [
-                Button.inline(Messages.BTN_PLAN3, b"plan3")
-            ],
-            [
-                Button.inline(Messages.BTN_BACK, b"back")
-            ]
+            [Button.inline(Messages.BTN_PLAN1, b"plan1"), Button.inline(Messages.BTN_PLAN2, b"plan2")],
+            [Button.inline(Messages.BTN_PLAN3, b"plan3")],
+            [Button.inline(Messages.BTN_BACK, b"back")]
         ]
         
         await event.answer("Select your plan")
-        await event.edit(
-            Messages.BUY_NOW_TXT,
-            buttons=buttons,
-            parse_mode='html'
-        )
-        
-        logger.info(f"User {event.sender_id} opened buy menu")
+        await event.edit(Messages.BUY_NOW_TXT, buttons=buttons, parse_mode='html')
+        log_user_action(event.sender_id, event.sender.username, event.sender.first_name, "Opened buy menu")
     
     @client.on(events.CallbackQuery(data=b"plan1"))
     async def plan1_handler(event):
@@ -54,17 +46,10 @@ async def register_buy_handler(client: TelegramClient, db: Database):
         await show_plan_selection(event, "plan3")
     
     async def show_plan_selection(event, plan_key):
-        """Show Ultra/Lite selection for selected plan"""
         plan = PLANS[plan_key]
-        
         buttons = [
-            [
-                Button.inline(Messages.BTN_ULTRA, f"ultra_{plan_key}".encode()),
-                Button.inline(Messages.BTN_LITE, f"lite_{plan_key}".encode())
-            ],
-            [
-                Button.inline(Messages.BTN_BACK, b"buy_now")
-            ]
+            [Button.inline(Messages.BTN_ULTRA, f"ultra_{plan_key}".encode()), Button.inline(Messages.BTN_LITE, f"lite_{plan_key}".encode())],
+            [Button.inline(Messages.BTN_BACK, b"buy_now")]
         ]
         
         await event.answer(f"Selected {plan['name']}")
@@ -72,7 +57,8 @@ async def register_buy_handler(client: TelegramClient, db: Database):
             Messages.PLAN_SELECTED_PAGE.format(
                 plan_name=plan['name'],
                 video_count=plan['videos'],
-                price=plan['price']
+                lite_price=plan['lite_price'],
+                ultra_price=plan['ultra_price']
             ),
             buttons=buttons,
             parse_mode='html'
@@ -80,117 +66,155 @@ async def register_buy_handler(client: TelegramClient, db: Database):
     
     @client.on(events.CallbackQuery(data=b"ultra_plan1"))
     async def ultra_plan1_handler(event):
-        await show_package_details(event, "plan1", "ULTRA")
+        await initiate_payment(event, "plan1", "ULTRA", PLANS["plan1"]["ultra_price"])
     
     @client.on(events.CallbackQuery(data=b"ultra_plan2"))
     async def ultra_plan2_handler(event):
-        await show_package_details(event, "plan2", "ULTRA")
+        await initiate_payment(event, "plan2", "ULTRA", PLANS["plan2"]["ultra_price"])
     
     @client.on(events.CallbackQuery(data=b"ultra_plan3"))
     async def ultra_plan3_handler(event):
-        await show_package_details(event, "plan3", "ULTRA")
+        await initiate_payment(event, "plan3", "ULTRA", PLANS["plan3"]["ultra_price"])
     
     @client.on(events.CallbackQuery(data=b"lite_plan1"))
     async def lite_plan1_handler(event):
-        await show_package_details(event, "plan1", "LITE")
+        await initiate_payment(event, "plan1", "LITE", PLANS["plan1"]["lite_price"])
     
     @client.on(events.CallbackQuery(data=b"lite_plan2"))
     async def lite_plan2_handler(event):
-        await show_package_details(event, "plan2", "LITE")
+        await initiate_payment(event, "plan2", "LITE", PLANS["plan2"]["lite_price"])
     
     @client.on(events.CallbackQuery(data=b"lite_plan3"))
     async def lite_plan3_handler(event):
-        await show_package_details(event, "plan3", "LITE")
+        await initiate_payment(event, "plan3", "LITE", PLANS["plan3"]["lite_price"])
     
-    async def show_package_details(event, plan_key, package_type):
-        """Show package details and confirm button"""
+    async def initiate_payment(event, plan_key, package_type, amount):
         plan = PLANS[plan_key]
+        user = event.sender
         
-        if package_type == "ULTRA":
-            price = plan['ultra_price']
-            text = Messages.ULTRA_PAGE.format(
-                plan_name=plan['name'],
-                video_count=plan['videos'],
-                ultra_price=price
-            )
-        else:
-            price = plan['lite_price']
-            text = Messages.LITE_PAGE.format(
-                plan_name=plan['name'],
-                video_count=plan['videos'],
-                lite_price=price
-            )
+        # Create invoice
+        merchant_name = f"{plan['name']} {package_type}"
+        merchant_desc = f"{plan['videos']} videos - {package_type} package"
+        
+        invoice = await payment_api.create_invoice(amount, merchant_name, merchant_desc)
+        
+        if not invoice['success']:
+            await event.answer("Payment service error. Try again later!", alert=True)
+            return
+        
+        unique_amount = invoice['unique_amount']
+        
+        # Store payment session
+        session_id = f"{user.id}_{plan_key}_{package_type}"
+        active_payments[session_id] = {
+            'user_id': user.id,
+            'plan_key': plan_key,
+            'package_type': package_type,
+            'amount': amount,
+            'unique_amount': unique_amount,
+            'status': 'pending'
+        }
+        
+        # Create QR code (you need to generate actual QR)
+        qr_text = f"Pay ₹{amount} to UPI: your-upi@id"
         
         buttons = [
-            [
-                Button.inline(Messages.BTN_CONFIRM, f"confirm_{plan_key}_{package_type}_{price}".encode())
-            ],
-            [
-                Button.inline(Messages.BTN_BACK, f"{plan_key}".encode())
-            ]
+            [Button.inline(Messages.BTN_CHECK_STATUS, f"check_{session_id}".encode())],
+            [Button.inline(Messages.BTN_CANCEL_PAYMENT, b"buy_now")]
         ]
         
-        await event.answer(f"Showing {package_type} package details")
         await event.edit(
-            text,
-            buttons=buttons,
-            parse_mode='html'
-        )
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan1_ULTRA_15"))
-    async def confirm_purchase_plan1_ultra(event):
-        await process_purchase(event, "plan1", "ULTRA", 15)
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan1_LITE_10"))
-    async def confirm_purchase_plan1_lite(event):
-        await process_purchase(event, "plan1", "LITE", 10)
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan2_ULTRA_25"))
-    async def confirm_purchase_plan2_ultra(event):
-        await process_purchase(event, "plan2", "ULTRA", 25)
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan2_LITE_18"))
-    async def confirm_purchase_plan2_lite(event):
-        await process_purchase(event, "plan2", "LITE", 18)
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan3_ULTRA_50"))
-    async def confirm_purchase_plan3_ultra(event):
-        await process_purchase(event, "plan3", "ULTRA", 50)
-    
-    @client.on(events.CallbackQuery(data=b"confirm_plan3_LITE_35"))
-    async def confirm_purchase_plan3_lite(event):
-        await process_purchase(event, "plan3", "LITE", 35)
-    
-    async def process_purchase(event, plan_key, package_type, price):
-        """Process the purchase"""
-        plan = PLANS[plan_key]
-        user = await event.get_sender()
-        
-        # Save purchase to database
-        await db.add_purchase(
-            user_id=user.id,
-            plan=f"{plan['name']} - {package_type}",
-            price=price,
-            package_type=package_type
-        )
-        
-        # Show success message
-        buttons = [
-            [
-                Button.inline(Messages.BTN_HISTORY, b"history"),
-                Button.inline("🏠 MAIN MENU", b"back")
-            ]
-        ]
-        
-        await event.answer("✅ Purchase successful!", alert=True)
-        await event.edit(
-            Messages.PURCHASE_SUCCESS.format(
+            Messages.PAYMENT_QR.format(
                 plan_name=plan['name'],
                 package_type=package_type,
-                price=price
+                amount=amount,
+                qr_code=qr_text
             ),
             buttons=buttons,
             parse_mode='html'
         )
         
-        logger.info(f"User {user.id} purchased {plan['name']} - {package_type} for ${price}")
+        log_user_action(user.id, user.username, user.first_name, f"Initiating payment", f"{plan['name']} {package_type} - ₹{amount}")
+        
+        # Auto-check payment in background
+        asyncio.create_task(check_payment_loop(event.client, event.chat_id, session_id, unique_amount))
+    
+    async def check_payment_loop(client, chat_id, session_id, amount, timeout=600):
+        """Check payment status every 5 seconds for 10 minutes"""
+        for _ in range(timeout // 5):
+            await asyncio.sleep(5)
+            
+            if session_id not in active_payments:
+                return
+            
+            if active_payments[session_id]['status'] == 'completed':
+                return
+            
+            result = await payment_api.check_payment(amount)
+            
+            if result.get('paid'):
+                active_payments[session_id]['status'] = 'completed'
+                await complete_purchase(client, chat_id, session_id)
+                return
+        
+        # Timeout
+        if session_id in active_payments and active_payments[session_id]['status'] == 'pending':
+            active_payments[session_id]['status'] = 'timeout'
+            await client.send_message(chat_id, Messages.PAYMENT_TIMEOUT, parse_mode='html')
+    
+    async def complete_purchase(client, chat_id, session_id):
+        """Complete the purchase after successful payment"""
+        session = active_payments.get(session_id)
+        if not session:
+            return
+        
+        plan = PLANS[session['plan_key']]
+        user_id = session['user_id']
+        
+        # Save to database
+        await db.add_purchase(
+            user_id=user_id,
+            plan=f"{plan['name']} - {session['package_type']}",
+            price=session['amount'],
+            package_type=session['package_type']
+        )
+        
+        buttons = [
+            [Button.inline(Messages.BTN_HISTORY, b"history"), Button.inline("🏠 MAIN MENU", b"back")]
+        ]
+        
+        await client.send_message(
+            chat_id,
+            Messages.PAYMENT_SUCCESS.format(
+                amount=session['amount'],
+                plan_name=plan['name'],
+                package_type=session['package_type'],
+                access_link="https://t.me/your_channel/start"
+            ),
+            buttons=buttons,
+            parse_mode='html'
+        )
+        
+        log_user_action(user_id, None, f"User {user_id}", "Payment successful", f"{plan['name']} {session['package_type']} - ₹{session['amount']}")
+        
+        # Cleanup
+        del active_payments[session_id]
+    
+    @client.on(events.CallbackQuery(data=lambda x: x and x.startswith(b"check_")))
+    async def check_payment_handler(event):
+        """Manual check payment button"""
+        session_id = event.data.decode().split("_")[1]
+        
+        if session_id not in active_payments:
+            await event.answer("Payment session expired!", alert=True)
+            return
+        
+        session = active_payments[session_id]
+        result = await payment_api.check_payment(session['unique_amount'])
+        
+        if result.get('paid'):
+            session['status'] = 'completed'
+            await complete_purchase(event.client, event.chat_id, session_id)
+            await event.answer("Payment confirmed! ✅", alert=True)
+        else:
+            await event.answer("Payment not received yet. Please complete payment and try again.", alert=True)
